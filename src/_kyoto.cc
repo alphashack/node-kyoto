@@ -260,6 +260,8 @@ public:
     NODE_SET_PROTOTYPE_METHOD(ctor, "count", Count);
     NODE_SET_PROTOTYPE_METHOD(ctor, "size", Size);
     NODE_SET_PROTOTYPE_METHOD(ctor, "status", Status);
+    NODE_SET_PROTOTYPE_METHOD(ctor, "beginTransaction", BeginTransaction);
+    NODE_SET_PROTOTYPE_METHOD(ctor, "endTransaction", EndTransaction);
     // NODE_SET_PROTOTYPE_METHOD(ctor, "merge", Merge);
 
     // Here are some non-standard methods for Toji.
@@ -1189,7 +1191,69 @@ public:
     }
   };
 
-  // 
+  // ### BeginTransaction ###
+DEFINE_METHOD(BeginTransaction, BeginTransactionRequest)
+  class BeginTransactionRequest: public Request {
+  protected:
+    bool hard;
+
+  public:
+    inline static bool validate(const Arguments& args) {
+      return (args.Length() >= 1
+	      && args[0]->IsBoolean());
+    }
+
+    BeginTransactionRequest(const Arguments& args):
+      Request(args, 1),
+      hard(args[0]->ToBoolean() == v8::True())
+    {}
+
+    inline int exec() {
+      PolyDB* db = wrap->db;
+      if (!db->begin_transaction(hard)) {
+	result = db->error().code();
+      }
+      return 0;
+    }
+
+    inline int after() {
+      Local<Value> argv[1] = { error() };
+      callback(1, argv);
+      return 0;
+    }
+  };
+  // ### EndTransaction ###
+DEFINE_METHOD(EndTransaction, EndTransactionRequest)
+  class EndTransactionRequest: public Request {
+  protected:
+    bool commit;
+
+  public:
+    inline static bool validate(const Arguments& args) {
+      return (args.Length() >= 1
+	      && args[0]->IsBoolean());
+    }
+
+    EndTransactionRequest(const Arguments& args):
+      Request(args, 1),
+      commit(args[0]->ToBoolean() == v8::True())
+    {}
+
+    inline int exec() {
+      PolyDB* db = wrap->db;
+      if (!db->end_transaction(commit)) {
+	result = db->error().code();
+      }
+      return 0;
+    }
+
+    inline int after() {
+      Local<Value> argv[1] = { error() };
+      callback(1, argv);
+      return 0;
+    }
+  };
+// 
   // // ### Merge ###
 
   // DEFINE_METHOD(Merge, MergeRequest)

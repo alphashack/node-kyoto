@@ -435,6 +435,51 @@ KyotoDB.prototype.synchronize = function(hard, next) {
   return this;
 };
 
+KyotoDB.prototype.beginTransaction = function(hard, next) {
+    var self = this;
+
+    if (typeof hard == 'function') {
+        next = hard;
+        hard = undefined;
+    }
+
+    hard = (hard === undefined) ? false : hard;
+    next = next || noop;
+
+    if (this.db === null)
+        next.call(this, new Error('beginTransaction: database is closed.'));
+    else
+        this.db.beginTransaction(hard, function(err) {
+            next.call(self, err);
+        });
+
+    return this;
+};
+
+KyotoDB.prototype.endTransaction = function(commit, next) {
+    var self = this;
+
+    if (typeof commit == 'function') {
+        next = commit;
+        commit = undefined;
+    }
+
+    commit = (commit === undefined) ? true : commit;
+    next = next || noop;
+
+    if (this.db === null)
+        next.call(this, new Error('endTransaction: database is closed.'));
+    else
+        this.db.endTransaction(commit, function(err) {
+            next.call(self, err);
+        });
+
+    return this;
+};
+
+
+
+
 // Copy the current database file to another file.
 //
 // + path - String destination
