@@ -1130,7 +1130,7 @@ public:
     }
 
     inline int after() {
-      Local<Value> argv[2] = { error(), Integer::New(total) };
+      Local<Value> argv[2] = { error(), Number::New(total) };
       callback(2, argv);
       return 0;
     }
